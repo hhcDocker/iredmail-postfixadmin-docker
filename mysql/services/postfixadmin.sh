@@ -5,6 +5,7 @@
 #done
 
 . /opt/iredmail/.cv
+DOMAIN=$(hostname -d)
 POSTMASTER_ADMIN_PASSWORD=$(echo $POSTMASTER_PASSWORD | sed 's/{MD5-CRYPT}//')
 mysql -u vmailadmin -p$VMAIL_DB_ADMIN_PASSWD -e "\
 UPDATE admin SET username = 'postmaster@$DOMAIN', password = '$POSTMASTER_ADMIN_PASSWORD' WHERE username='postmaster@DOMAIN';\
