@@ -72,7 +72,7 @@ RUN apt-get install -y -q php-imap
 RUN wget -q -O - "http://downloads.sourceforge.net/project/postfixadmin/postfixadmin/postfixadmin-3.1/postfixadmin-3.1.tar.gz" | tar -xzf - -C /opt/www
 RUN mkdir /opt/www/postfixadmin-3.1/templates_c && chown 1000:1000 /opt/www/postfixadmin-3.1/templates_c && chmod u=rwx,g=rwx,o=rwx /opt/www/postfixadmin-3.1/templates_c
 ADD postfixadmin/postfixadmin.tmpl /etc/nginx/templates
-ADD postfixadmin/90-include-tmpl-postfixadmin.conf /etc/nginx/sites-conf.d/default-ssl
+RUN sed -i 's/}/    include \/etc\/nginx\/templates\/postfixadmin.tmpl;\n}/' /etc/nginx/sites-available/00-default-ssl.conf
 
 # Configure Postfixadmin
 ADD postfixadmin/config.local.php /opt/www/postfixadmin-3.1/config.local.php
