@@ -66,7 +66,6 @@ RUN . ./config \
     && mysql -u $MYSQL_ROOT_USER -p$MYSQL_ROOT_PASSWD -e 'SET global sql_mode = " ";' \
     && mysql -u $MYSQL_ROOT_USER -p$MYSQL_ROOT_PASSWD vmail < /opt/www/postfixadmin-3.1/upgrade.sql \
     && mysql -u $MYSQL_ROOT_USER -p$MYSQL_ROOT_PASSWD -e 'SET global sql_mode = "ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION";'
-#    && find /var/lib/mysql/mysql -exec touch -c -a {} + \
 
 # Install Postfixadmin
 RUN apt-get install -y -q php-imap
@@ -130,5 +129,4 @@ RUN apt-get purge -y -q dialog apt-utils augeas-tools \
 EXPOSE 80 443 25 587 110 143 993 995
 
 # Default values changable at startup
-ENV SOGO_WORKERS=2
 ENV TZ=Etc/UTC
