@@ -1,12 +1,22 @@
-# Roundcube webmail
-location ~ ^/mailadmin(.*)\.php$ {
-    include /etc/nginx/templates/hsts.tmpl;
-    include /etc/nginx/templates/fastcgi_php.tmpl;
-    fastcgi_param SCRIPT_FILENAME /opt/www/postfixadmin-3.1$1.php;
+# Block access to default directories and files under these directories
+location ~ /mailadmin/(bin|config|installer|logs|SQL|temp|vendor)($|/.*) { deny all; }
+
+# Block access to default files under top-directory and files start with same name.
+location ~ /mailadmin/(CHANGELOG|composer.json|INSTALL|jsdeps.json|LICENSE|README|UPGRADING)($|.*) { deny all; }
+
+# Redirect URI `/mailadmin` to `/mailadmin/`.
+location = /mailadmin {
+    return 301 /mailadmin/;
 }
 
-location ~ ^/mailadmin(.*) {
-    alias /opt/www/postfixadmin-3.1$1;
+location ~ ^/mailadmin/(.*\.php)$ {
+    include /etc/nginx/templates/hsts.tmpl;
+    include /etc/nginx/templates/fastcgi_php.tmpl;
+    fastcgi_param SCRIPT_FILENAME /opt/www/postfixadmin-3.1/$1;
+}
+
+location ~ ^/mailadmin/(.*) {
+    alias /opt/www/postfixadmin-3.1/$1;
     index index.php;
 }
 
