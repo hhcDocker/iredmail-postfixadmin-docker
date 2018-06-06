@@ -2,7 +2,7 @@ FROM phusion/baseimage:latest
 MAINTAINER Miloš Kozák <milos.kozak@lejmr.com>
 
 # Suporting software versions
-ARG IREDMAIL_VERSION=0.9.7
+ARG IREDMAIL_VERSION=0.9.8
 
 # Default values changable at startup
 ARG DOMAIN=DOMAIN
@@ -25,25 +25,18 @@ RUN echo "APT::Install-Recommends 0;" >> /etc/apt/apt.conf.d/01-no-recommends \
        mysql-server \
        netcat \
        memcached \
+       tmpreaper \
     && apt-get autoremove -y -q \
-    && apt-get clean -y -q \
-    && echo $DOMAIN > /etc/mailname \
-    && echo $HOSTNAME > /opt/hostname \
-    && mv /bin/uname /bin/uname_ \
-    && mv /bin/hostname /bin/hostname_
-
-COPY ./uname /bin/uname
-COPY ./hostname /bin/hostname
+    && apt-get clean -y -q
 
 # Install of iRedMail from sources
 WORKDIR /opt/iredmail
-
 RUN wget -O - https://bitbucket.org/zhb/iredmail/downloads/iRedMail-"${IREDMAIL_VERSION}".tar.bz2 | \
     tar xvj --strip-components=1
 
 # Generate configuration file
 COPY ./config-gen /opt/iredmail/config-gen
-RUN sh ./config-gen $HOSTNAME $DOMAIN > ./config
+RUN sh ./config-gen HOSTNAME DOMAIN > ./config
 
 # Initiate automatic installation process
 RUN sed s/$(hostname_)/$(cat /opt/hostname | xargs echo -n).$(cat /etc/mailname | xargs echo -n)/ /etc/hosts > /tmp/hosts_ \
@@ -51,9 +44,8 @@ RUN sed s/$(hostname_)/$(cat /opt/hostname | xargs echo -n).$(cat /etc/mailname 
     && rm /tmp/hosts_ \
     && echo $HOSTNAME > /etc/hostname \
     && sleep 5;service mysql start \
-    && sed -i 's/1.3.0/1.3.3/' /opt/iredmail/pkgs/MD5.misc /opt/iredmail/conf/roundcube \
-    && sed -i 's/9f81625029663c7b19402542356abd5e/71b16babe3beb7639ad7a4595b3ac92a/' /opt/iredmail/pkgs/MD5.misc \
     && IREDMAIL_DEBUG='NO' \
+       IREDMAIL_HOSTNAME="HOSTNAME.DOMAIN" \
        CHECK_NEW_IREDMAIL='NO' \
        AUTO_USE_EXISTING_CONFIG_FILE=y \
        AUTO_INSTALL_WITHOUT_CONFIRM=y \
@@ -74,7 +66,9 @@ RUN sed -i '/^Foreground /c Foreground true' /etc/clamav/clamd.conf \
     && sed -i 's/^bind-address/#bind-address/' /etc/mysql/mysql.conf.d/mysqld.cnf \
     && sed -i 's/SHOWWARNING[ \t]*=.*/SHOWWARNING=false/g' /etc/tmpreaper.conf \
     && install -o amavis -g amavis -m 750 -d /var/lib/amavis/.spamassassin \
-    && install -o amavis -g amavis -m 640 -T /usr/share/spamassassin/user_prefs.template /var/lib/amavis/.spamassassin/user_prefs
+    && install -o amavis -g amavis -m 640 -T /usr/share/spamassassin/user_prefs.template /var/lib/amavis/.spamassassin/user_prefs \
+    && rm -f /etc/ssl/private/iRedMail.key \
+    && rm -f /etc/ssl/certs/iRedMail.crt
 
 # Prepare for the first run
 RUN tar jcf /root/mysql.tar.bz2 /var/lib/mysql && rm -rf /var/lib/mysql \
@@ -104,6 +98,8 @@ ADD services/nginx.sh /etc/service/httpd/run
 ADD services/fail2ban.sh /etc/service/fail2ban/run
 ADD services/clamav-daemon.sh /etc/service/clamav-daemon/run
 ADD services/clamav-freshclam.sh /etc/service/clamav-freshclam/run
+ADD services/netdata.sh /etc/service/netdata/run
+ADD services/mlmmjadmin.sh /etc/service/mlmmjadmin/run
 
 
 ### Purge some packets and save disk space
