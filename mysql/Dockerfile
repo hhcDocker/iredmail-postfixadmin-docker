@@ -39,11 +39,10 @@ COPY ./config-gen /opt/iredmail/config-gen
 RUN sh ./config-gen HOSTNAME DOMAIN > ./config
 
 # Initiate automatic installation process
-RUN sed s/$(hostname)/$HOSTNAME.$DOMAIN/ /etc/hosts > /tmp/hosts_ \
+RUN sed s/$(hostname_)/$(cat /opt/hostname | xargs echo -n).$(cat /etc/mailname | xargs echo -n)/ /etc/hosts > /tmp/hosts_ \
     && cat /tmp/hosts_ > /etc/hosts \
     && rm /tmp/hosts_ \
-    && echo $HOSTNAME.$DOMAIN > /etc/hostname \
-    && find /var/lib/mysql -type f -exec touch -c -a {} + \
+    && echo $HOSTNAME > /etc/hostname \
     && sleep 5;service mysql start \
     && IREDMAIL_DEBUG='NO' \
        IREDMAIL_HOSTNAME="HOSTNAME.DOMAIN" \
@@ -84,6 +83,7 @@ RUN sed -i '/^Foreground /c Foreground true' /etc/clamav/clamd.conf \
     && sed -i '/init.d/c pkill -sighup clamd' /etc/logrotate.d/clamav-daemon \
     && sed -i '/^Foreground /c Foreground true' /etc/clamav/freshclam.conf \
     && sed -i 's/^bind-address/#bind-address/' /etc/mysql/mysql.conf.d/mysqld.cnf \
+    && sed -i 's/SHOWWARNING[ \t]*=.*/SHOWWARNING=false/g' /etc/tmpreaper.conf \
     && install -o amavis -g amavis -m 750 -d /var/lib/amavis/.spamassassin \
     && install -o amavis -g amavis -m 640 -T /usr/share/spamassassin/user_prefs.template /var/lib/amavis/.spamassassin/user_prefs \
     && rm -f /etc/ssl/private/iRedMail.key \
@@ -97,6 +97,7 @@ RUN tar jcf /root/mysql.tar.bz2 /var/lib/mysql && rm -rf /var/lib/mysql \
     && rm -rf /var/lib/clamav/*
 
 ADD update.sh /sbin/update-iredmail
+
 
 ### Startup services
 # Core Services
