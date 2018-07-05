@@ -88,7 +88,8 @@ RUN sed -i '/^Foreground /c Foreground true' /etc/clamav/clamd.conf \
     && install -o amavis -g amavis -m 640 -T /usr/share/spamassassin/user_prefs.template /var/lib/amavis/.spamassassin/user_prefs \
     && rm -f /etc/ssl/private/iRedMail.key \
     && rm -f /etc/ssl/certs/iRedMail.crt \
-    && sed -i 's/export DATABASES='\''mysql vmail roundcubemail amavisd iredadmin sogo iredapd'\''/export DATABASES='\''mysql vmail roundcubemail amavisd iredapd'\''/' /var/vmail/backup/backup_mysql.sh \
+    && rm -f /var/lib/dkim/DOMAIN.pem
+RUN sed -i 's/export DATABASES='\''mysql vmail roundcubemail amavisd iredadmin sogo iredapd'\''/export DATABASES='\''mysql vmail roundcubemail amavisd iredapd'\''/' /var/vmail/backup/backup_mysql.sh \
     && sed -i 's/^\${CMD_MYSQL} iredadmin -e /#\${CMD_MYSQL} iredadmin -e /' /var/vmail/backup/backup_mysql.sh
 
 # Prepare for the first run
