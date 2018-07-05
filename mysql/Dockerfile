@@ -59,6 +59,25 @@ RUN sed s/$(hostname_)/$(cat /opt/hostname | xargs echo -n).$(cat /etc/mailname 
     && apt-get autoremove -y -q \
     && apt-get clean -y -q
 
+# Postfixadmin SQL
+ADD postfixadmin/upgrade.sql /opt/www/postfixadmin-3.1/upgrade.sql
+RUN . ./config \
+    && find /var/lib/mysql -exec touch -c -a {} + \
+    && sleep 5;service mysql start \
+    && mysql -u $MYSQL_ROOT_USER -p$MYSQL_ROOT_PASSWD -e 'SET global sql_mode = " ";' \
+    && mysql -u $MYSQL_ROOT_USER -p$MYSQL_ROOT_PASSWD vmail < /opt/www/postfixadmin-3.1/upgrade.sql \
+    && mysql -u $MYSQL_ROOT_USER -p$MYSQL_ROOT_PASSWD -e 'SET global sql_mode = "ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION";'
+
+# Install Postfixadmin
+RUN apt-get install -y -q php-imap
+RUN wget -q -O - "http://downloads.sourceforge.net/project/postfixadmin/postfixadmin/postfixadmin-3.1/postfixadmin-3.1.tar.gz" | tar -xzf - -C /opt/www
+RUN mkdir /opt/www/postfixadmin-3.1/templates_c && chown 1000:1000 /opt/www/postfixadmin-3.1/templates_c && chmod u=rwx,g=rwx,o=rwx /opt/www/postfixadmin-3.1/templates_c
+ADD postfixadmin/postfixadmin.tmpl /etc/nginx/templates
+RUN sed -i 's/}/    include \/etc\/nginx\/templates\/postfixadmin.tmpl;\n}/' /etc/nginx/sites-available/00-default-ssl.conf
+
+# Configure Postfixadmin
+ADD postfixadmin/config.local.php /opt/www/postfixadmin-3.1/config.local.php
+
 ### Final configuration
 RUN sed -i '/^Foreground /c Foreground true' /etc/clamav/clamd.conf \
     && sed -i '/init.d/c pkill -sighup clamd' /etc/logrotate.d/clamav-daemon \
@@ -70,6 +89,8 @@ RUN sed -i '/^Foreground /c Foreground true' /etc/clamav/clamd.conf \
     && rm -f /etc/ssl/private/iRedMail.key \
     && rm -f /etc/ssl/certs/iRedMail.crt \
     && rm -f /var/lib/dkim/DOMAIN.pem
+RUN sed -i 's/export DATABASES='\''mysql vmail roundcubemail amavisd iredadmin sogo iredapd'\''/export DATABASES='\''mysql vmail roundcubemail amavisd iredapd'\''/' /var/vmail/backup/backup_mysql.sh \
+    && sed -i 's/^\${CMD_MYSQL} iredadmin -e /#\${CMD_MYSQL} iredadmin -e /' /var/vmail/backup/backup_mysql.sh
 
 # Prepare for the first run
 RUN tar jcf /root/mysql.tar.bz2 /var/lib/mysql && rm -rf /var/lib/mysql \
@@ -90,10 +111,9 @@ ADD services/dovecot.sh /etc/service/dovecot/run
 
 # Frontend
 ADD services/memcached.sh /etc/service/memcached/run
-ADD services/sogo.sh /etc/service/sogo/run
-ADD services/iredadmin.sh /etc/service/iredadmin/run
 ADD services/php7-fpm.sh /etc/service/php7-fpm/run
 ADD services/nginx.sh /etc/service/httpd/run
+ADD services/postfixadmin.sh /etc/service/postfixadmin/run
 
 # Enhancement
 ADD services/fail2ban.sh /etc/service/fail2ban/run
@@ -115,5 +135,4 @@ RUN apt-get purge -y -q dialog apt-utils augeas-tools \
 EXPOSE 80 443 25 587 110 143 993 995
 
 # Default values changable at startup
-ENV SOGO_WORKERS=2
 ENV TZ=Etc/UTC
