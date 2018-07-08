@@ -39,10 +39,10 @@ COPY ./config-gen /opt/iredmail/config-gen
 RUN sh ./config-gen HOSTNAME DOMAIN > ./config
 
 # Initiate automatic installation process
-RUN sed s/$(hostname_)/$(cat /opt/hostname | xargs echo -n).$(cat /etc/mailname | xargs echo -n)/ /etc/hosts > /tmp/hosts_ \
+RUN sed s/$(hostname)/HOSTNAME.DOMAIN/ /etc/hosts > /tmp/hosts_ \
     && cat /tmp/hosts_ > /etc/hosts \
     && rm /tmp/hosts_ \
-    && echo $HOSTNAME > /etc/hostname \
+    && echo HOSTNAME > /etc/hostname \
     && find /var/lib/mysql -type f -exec touch -c -a {} + \
     && sleep 5;service mysql start \
     && IREDMAIL_DEBUG='NO' \
