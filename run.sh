@@ -18,5 +18,8 @@ docker run -d --privileged -p 80:80 -p 443:443 -p 25:25 -p 587:587 -p 110:110 -p
            -v /opt/containers/iredmail/mysql:/var/lib/mysql \
            -v /opt/containers/iredmail/vmail:/var/vmail \
            -v /opt/containers/iredmail/clamav:/var/lib/clamav \
+           -v /opt/containers/iredmail/dkim/$domain.pem:/var/lib/dkim/$domain.pem \
+           -v /etc/letsencrypt/live/mail.$domain/privkey.pem:/etc/ssl/private/iRedMail.key:ro \
+           -v /etc/letsencrypt/live/mail.$domain/fullchain.pem:/etc/ssl/certs/iRedMail.crt:ro \
            --restart unless-stopped \
-           --name=iredmail iredmail-postfixadmin
+           --name=iredmail infiniteluke/iredmail-postfixadmin
