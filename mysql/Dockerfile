@@ -43,6 +43,7 @@ RUN sed s/$(hostname_)/$(cat /opt/hostname | xargs echo -n).$(cat /etc/mailname 
     && cat /tmp/hosts_ > /etc/hosts \
     && rm /tmp/hosts_ \
     && echo $HOSTNAME > /etc/hostname \
+    && find /var/lib/mysql -type f -exec touch -c -a {} + \
     && sleep 5;service mysql start \
     && IREDMAIL_DEBUG='NO' \
        IREDMAIL_HOSTNAME="HOSTNAME.DOMAIN" \
