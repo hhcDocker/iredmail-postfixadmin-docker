@@ -67,7 +67,8 @@ RUN . ./config \
     && sleep 5;service mysql start \
     && mysql -u $MYSQL_ROOT_USER -p$MYSQL_ROOT_PASSWD -e 'SET global sql_mode = " ";' \
     && mysql -u $MYSQL_ROOT_USER -p$MYSQL_ROOT_PASSWD vmail < /opt/www/postfixadmin-3.1/upgrade.sql \
-    && mysql -u $MYSQL_ROOT_USER -p$MYSQL_ROOT_PASSWD -e 'SET global sql_mode = "ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION";'
+    && mysql -u $MYSQL_ROOT_USER -p$MYSQL_ROOT_PASSWD -e 'SET global sql_mode = "ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION";' \
+    && rm /opt/www/postfixadmin-3.1/upgrade.sql
 
 # Install Postfixadmin
 RUN apt-get install -y -q php-imap
